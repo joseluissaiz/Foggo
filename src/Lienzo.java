@@ -1,5 +1,7 @@
 import javax.imageio.ImageIO;
-import java.awt.*;
+import java.awt.Canvas;
+import java.awt.Color;
+import java.awt.Graphics;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -28,7 +30,7 @@ public class Lienzo extends Canvas implements Runnable {
 
     //----------------------------------------------------------------------------------------------------------GRAPHICS
 
-    public void dibujar() {
+    private void dibujar() {
         BufferStrategy bs = this.getBufferStrategy();
         if (bs == null) {
             int numeroBuffers = 3;
@@ -55,7 +57,6 @@ public class Lienzo extends Canvas implements Runnable {
     public void run() {
         while (true) {
             this.dibujar();
-
             try {
                 sleep(15);
             } catch (InterruptedException e) {

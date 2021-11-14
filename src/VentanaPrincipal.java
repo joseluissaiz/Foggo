@@ -10,7 +10,8 @@ public class VentanaPrincipal extends JFrame {
     private final int           ANCHO  = 1220;
     private       Lienzo        lienzo;
     private       List<Fuego>   listaFuegos;
-    private final PaletaColores paletaColores;
+    private PaletaColores paletaFuego;
+    private PaletaColores paletaHumo;
 
     //-----------------------------------------------------------------------------------------------------CONSTRUCTORES
 
@@ -22,20 +23,10 @@ public class VentanaPrincipal extends JFrame {
         }
         this.setResizable(false);
         this.setSize(ANCHO, ALTURA);
-        //this.lienzo = new Lienzo((ANCHO/8), ALTURA, this);
         this.crearFrame();
         this.setVisible(true);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        paletaColores = new PaletaColores(
-                new ColorObjetivo(new Color(255,255,255,250), 255),
-                new ColorObjetivo(new Color(255, 170, 0, 159), 200),
-                new ColorObjetivo(new Color(165, 23, 0, 203), 150),
-                new ColorObjetivo(new Color(174, 20, 0,50), 100),
-                new ColorObjetivo(new Color(136, 0, 0,20), 50),
-                new ColorObjetivo(new Color(0, 0, 0,0), 0)
-
-                );
-
+        crearPaletas();
     }
 
     private void crearFrame() {
@@ -56,6 +47,24 @@ public class VentanaPrincipal extends JFrame {
 
     }
 
+    private void crearPaletas() {
+        paletaFuego = new PaletaColores(
+                new ColorObjetivo(new Color(255,255,255,250), 255),
+                new ColorObjetivo(new Color(255, 170, 0, 159), 200),
+                new ColorObjetivo(new Color(165, 23, 0, 203), 150),
+                new ColorObjetivo(new Color(174, 0, 0,50), 100),
+                new ColorObjetivo(new Color(136, 0, 0,20), 50),
+                new ColorObjetivo(new Color(136, 0, 0,10), 20),
+                new ColorObjetivo(new Color(0, 0, 0,0), 0)
+        );
+        paletaHumo = new PaletaColores(
+                new ColorObjetivo(new Color(0, 0, 0, 255), 255),
+                new ColorObjetivo(new Color(0, 0, 0, 50), 100),
+                new ColorObjetivo(new Color(0, 0, 0, 10), 50),
+                new ColorObjetivo(new Color(0, 0, 0,0), 0)
+        );
+    }
+
     //---------------------------------------------------------------------------------------------------------------DTO
 
     public List<Fuego> obtenerListaFuegos() {
@@ -68,8 +77,8 @@ public class VentanaPrincipal extends JFrame {
 
     public void empezarFuego() {
         this.listaFuegos = new ArrayList<>();
-        //this.listaFuegos.add(new Fuego(0, ALTURA - 487, ANCHO, 450, paletaColores));
-        this.listaFuegos.add(new Fuego(0, 0, ((ANCHO/10)*7)-20, ALTURA-37, paletaColores));
+        this.listaFuegos.add(new Fuego(0, 0, ((ANCHO/10)*7)-20, ALTURA-37, paletaHumo));
+        this.listaFuegos.add(new Fuego(0, 0, ((ANCHO/10)*7)-20, ALTURA-37, paletaFuego));
 
         for (Fuego fuego : listaFuegos) {
             fuego.start();

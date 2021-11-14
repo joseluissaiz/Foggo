@@ -1,4 +1,3 @@
-import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.util.Random;
@@ -10,10 +9,16 @@ public class Fuego extends Thread {
     private final int[][]       pixels;
     private final BufferedImage imagen;
     private final PaletaColores paleta;
-    private double              gas;
+    private boolean             activo;
     private int                 probabilidadIncendio;
 
-    //-----------------------------------------------------------------------------------------------------CONSTRUCTORES
+    // TODO: 14/11/2021 Se necesita ajustar
+    private double              gas;
+
+    // TODO: 13/11/2021 Se necesita implementar
+    //private int                 factorPonderacion;
+
+    //-------------------------------------------------------------------------------------------------------CONSTRUCTOR
 
     public Fuego(int x, int y, int ancho, int altura, PaletaColores paleta) {
         this.x = x;
@@ -21,15 +26,17 @@ public class Fuego extends Thread {
         this.ancho = ancho;
         this.altura = altura;
         this.paleta = paleta;
-        this.pixels = new int[ancho][altura];
-        this.imagen = new BufferedImage(ancho, altura, BufferedImage.TYPE_INT_ARGB);
-        this.gas = 1.5; //1.5
-        this.probabilidadIncendio = 250; //250
+        pixels = new int[ancho][altura];
+        imagen = new BufferedImage(ancho, altura, BufferedImage.TYPE_INT_ARGB);
+        activo = true;
+        gas = 1.5; //1.5
+        probabilidadIncendio = 250; //250
+
     }
 
     //-----------------------------------------------------------------------------------------------------------GESTION
 
-    public void actualizar() {
+    private void actualizar() {
         encenderPixeles();
         propagarPixeles();
         enfriarPixeles();
@@ -40,8 +47,9 @@ public class Fuego extends Thread {
     private void encenderPixeles() {
         boolean seEnciende;
         Random probabilidad = new Random();
+
         for (int fx = 0; fx < ancho; fx++) {
-            //Si el la llama esta cerca del centro, hay mas posibilidades de que se encienda
+            //Si los pixeles estan cerca del centro, hay mas posibilidades de que se enciendan
             if (fx >= ancho/2 - ancho/3 && fx <= ancho/2 + ancho/3) {
                 seEnciende = probabilidad.nextInt(probabilidadIncendio-probabilidadIncendio/3) == 1; //202
             } else {
@@ -80,10 +88,10 @@ public class Fuego extends Thread {
     private void encenderLlama(int x, int y) {
         //Llenamos la base de la llama con varios pixeles para aumentar la propagacion
                                          pixels[x][y] = 255;
-        if (x - 1 >= 0){                 pixels[x - 1][y] = 230; }
-        if (x - 2 >= 0){                 pixels[x - 2][y] = 200; }
-        if (x + 1 <= pixels.length-1){   pixels[x + 1][y] = 230; }
-        if (x + 2 <= pixels.length-1){   pixels[x + 2][y] = 200; }
+        if (x - 1 >= 0){                 pixels[x - 1][y] = 230; }  //Propagacion lineal
+        if (x - 2 >= 0){                 pixels[x - 2][y] = 200; }  //Propagacion lineal
+        if (x + 1 <= pixels.length-1){   pixels[x + 1][y] = 230; }  //Propagacion lineal
+        if (x + 2 <= pixels.length-1){   pixels[x + 2][y] = 200; }  //Propagacion lineal
 
     }
 
@@ -96,22 +104,37 @@ public class Fuego extends Thread {
 
         //Aplicamos al algoritmo sobre el punto teniendo en cuenta el numero de posiciones
         int media = 0;
-        if      (posiciones == 5) { media = (pixels[x][y+1] + pixels[x-1][y+1] + pixels[x-2][y+1] + pixels[x+1][y+1] + pixels[x+2][y+1])/5; }
-        else if (posiciones == 3) { media = (pixels[x][y+1] + pixels[x-1][y+1] + pixels[x+1][y+1])/3; }
-        else if (posiciones == 1) { media = (pixels[x][y+1]/2); }
+        if (posiciones == 5) {
+            media = (pixels[x][y+1] +
+                     pixels[x-1][y+1] +
+                     pixels[x-2][y+1] +
+                     pixels[x+1][y+1] +
+                     pixels[x+2][y+1] +
+                     pixels[x][y]
+            )/6;
+        }
+        else if (posiciones == 3) {
+            media = (pixels[x][y+1] +
+                     pixels[x-1][y+1] +
+                     pixels[x+1][y+1] +
+                     pixels[x][y]
+            )/4;
+        }
+        else if (posiciones == 1) {
+            media = (pixels[x][y+1] +
+                     pixels[x][y] +
+                     pixels[x][y]
+            )/3;
+        }
 
         //Asignamos la media calculada al punto en cuestion
         pixels[x][y] = media;
     }
 
-    private Color obtenerColorDeTemperatura(int cents) {
-        return paleta.obtenerColorPorTemperatura(cents);
-    }
-
     public void dibujar(Graphics g) {
         for (int fx = 0; fx < ancho; fx++) {
             for (int cy = 0; cy < altura; cy++) {
-                imagen.setRGB(fx, cy, obtenerColorDeTemperatura(pixels[fx][cy]).getRGB());
+                imagen.setRGB(fx, cy, paleta.obtenerColorPorTemperatura(pixels[fx][cy]).getRGB());
             }
         }
         g.drawImage(imagen, x, y, null);
@@ -123,8 +146,9 @@ public class Fuego extends Thread {
     public void run() {
         super.run();
         while (true) {
-            this.actualizar();
-
+            if (activo) {
+                this.actualizar();
+            }
             try {
                 sleep(15);
             } catch (InterruptedException e) {
@@ -136,11 +160,20 @@ public class Fuego extends Thread {
 
     //---------------------------------------------------------------------------------------------------------------DTO
 
+    /**en pruebas*/
     public void setGas(double gas) {
         this.gas = gas;
         if      (gas*100 < 50) { this.probabilidadIncendio = (int) (Math.abs(gas*230)); }
         else if (gas*100 < 75) { this.probabilidadIncendio = (int) (Math.abs(gas*250));                     }
         else if (gas*100 < 90) { this.probabilidadIncendio = (int) (Math.abs(Math.pow((gas*100),gas*1.8))); }
-        System.out.println(probabilidadIncendio);
     }
+
+    public void pausar() {
+        this.activo = false;
+    }
+
+    public void reanudar() {
+        this.activo = true;
+    }
+
 }
